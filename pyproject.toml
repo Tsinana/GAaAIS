@@ -1,0 +1,11 @@
+[project]
+name = "GAaAIS"
+version = "0.1.0"
+description = "Default template for PDM package"
+readme = "README.md"
+requires-python = "==3.13.*"
+dependencies = [
+    "flask>=3.1.0",
+    "matplotlib>=3.10.1",
+    "networkx>=3.4.2",
+]
