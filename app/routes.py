@@ -2,8 +2,12 @@ import os
 import time
 import json
 from flask import Blueprint, request, render_template, send_file
-from app.graph_coloring import GraphColoring, generate_random_graph, draw_graph
+
+from app.algorithms.genetic import genetic_coloring
+from app.algorithms.immune import immune_coloring
+from app.exact import exact_coloring, compare_solutions
 from app.utils import generate_bar_chart, generate_line_chart
+import networkx as nx
 
 main = Blueprint('main', __name__)
 
@@ -14,6 +18,21 @@ global_history_accuracy = {"Exact": [], "Genetic": [], "Immune": []}
 # Директория для сохранения графов (png)
 GRAPH_DIR = os.path.join(os.getcwd(), 'graphs')
 os.makedirs(GRAPH_DIR, exist_ok=True)
+
+def generate_random_graph(nodes_count):
+    """Генерирует случайный граф с заданным количеством узлов."""
+    prob = 0.3
+    return nx.gnp_random_graph(nodes_count, prob)
+
+def draw_graph(graph, coloring, filename):
+    """Отрисовывает граф с раскраской и сохраняет его в файл."""
+    import matplotlib.pyplot as plt
+    colors = [coloring[node] for node in graph.nodes]
+    plt.figure(figsize=(8, 6))
+    nx.draw(graph, node_color=colors, with_labels=True, cmap=plt.cm.jet)
+    file_path = os.path.join(GRAPH_DIR, filename)
+    plt.savefig(file_path)
+    plt.close()
 
 @main.route('/', methods=['GET', 'POST'])
 def index():
@@ -33,38 +52,37 @@ def index():
         except Exception:
             immune_params = {}
         
-        gc = GraphColoring()
         solutions = {}
         timings = {}
         
         # Точный алгоритм
         start_time = time.time()
-        exact_solution = gc.exact_coloring(graph)
+        exact_solution = exact_coloring(graph)
         timings['Exact'] = round(time.time() - start_time, 4)
         solutions['Exact'] = exact_solution
         
         # Генетический алгоритм (заглушка)
         start_time = time.time()
-        genetic_solution = gc.genetic_coloring(graph, genetic_params)
+        genetic_solution = genetic_coloring(graph, genetic_params)
         timings['Genetic'] = round(time.time() - start_time, 4)
         solutions['Genetic'] = genetic_solution
         
         # Алгоритм иммунной сети (заглушка)
         start_time = time.time()
-        immune_solution = gc.immune_coloring(graph, immune_params)
+        immune_solution = immune_coloring(graph, immune_params)
         timings['Immune'] = round(time.time() - start_time, 4)
         solutions['Immune'] = immune_solution
         
         accuracy = {
             'Exact': 100,
-            'Genetic': gc.compare_solutions(exact_solution, genetic_solution),
-            'Immune': gc.compare_solutions(exact_solution, immune_solution)
+            'Genetic': compare_solutions(exact_solution, genetic_solution),
+            'Immune': compare_solutions(exact_solution, immune_solution)
         }
         
-        # Сохранение графов в директории GRAPH_DIR
-        draw_graph(graph, exact_solution, os.path.join(GRAPH_DIR, 'exact_graph.png'))
-        draw_graph(graph, genetic_solution, os.path.join(GRAPH_DIR, 'genetic_graph.png'))
-        draw_graph(graph, immune_solution, os.path.join(GRAPH_DIR, 'immune_graph.png'))
+        # Сохранение графов для каждого алгоритма
+        draw_graph(graph, exact_solution, 'exact_graph.png')
+        draw_graph(graph, genetic_solution, 'genetic_graph.png')
+        draw_graph(graph, immune_solution, 'immune_graph.png')
         
         # Генерация графиков (бар-чартов) для текущего запуска
         timings_chart = generate_bar_chart(timings, "Execution Time", "Algorithm", "Time (s)")
