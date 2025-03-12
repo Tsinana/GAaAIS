@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Graph Coloring Results</title>
+</head>
+<body>
+    {% if timings is defined %}
+    <h1>Graph Coloring Results</h1>
+    <p><strong>Timings (seconds):</strong> {{ timings }}</p>
+    <p><strong>Accuracy (%):</strong> {{ accuracy }}</p>
+    <h2>Current Run Charts</h2>
+    <h3>Timings Chart</h3>
+    <img src="data:image/png;base64,{{ timings_chart }}" alt="Timings Chart">
+    <h3>Accuracy Chart</h3>
+    <img src="data:image/png;base64,{{ accuracy_chart }}" alt="Accuracy Chart">
+
+    <h2>History Charts</h2>
+    <h3>Execution Time History</h3>
+    <img src="data:image/png;base64,{{ history_timings_chart }}" alt="History Timings Chart">
+    <h3>Accuracy History</h3>
+    <img src="data:image/png;base64,{{ history_accuracy_chart }}" alt="History Accuracy Chart">
+
+    {% for alg in timings %}
+        <h2>{{ alg }} Algorithm Graph</h2>
+        <img src="/graph_image/{{ alg.lower() }}" alt="{{ alg }} graph">
+    {% endfor %}
+    <br><a href="/">Generate another graph</a>
+    {% else %}
+    <form method="post">
+        Number of nodes: <input type="number" name="nodes_count" value="10"><br>
+        Genetic parameters (JSON): <input type="text" name="genetic_params" value="{}"><br>
+        Immune parameters (JSON): <input type="text" name="immune_params" value="{}"><br>
+        <input type="submit" value="Generate">
+    </form>
+    {% endif %}
+</body>
+</html>
