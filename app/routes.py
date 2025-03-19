@@ -5,7 +5,7 @@ from flask import Blueprint, request, render_template, send_file
 
 from app.algorithms.genetic import genetic_coloring
 from app.algorithms.immune import immune_coloring
-from app.exact import exact_coloring, compare_solutions
+from app.exact import exact_coloring, compare_solutions, get_count_colors
 from app.utils import generate_bar_chart, generate_line_chart
 import networkx as nx
 
@@ -14,6 +14,7 @@ main = Blueprint('main', __name__)
 # Глобальные переменные для истории результатов
 global_history_timings = {"Exact": [], "Genetic": [], "Immune": []}
 global_history_accuracy = {"Exact": [], "Genetic": [], "Immune": []}
+global_colors_chart = {"Exact": [], "Genetic": [], "Immune": []}
 
 # Директория для сохранения графов (png)
 GRAPH_DIR = os.path.join(os.getcwd(), 'graphs')
@@ -54,29 +55,37 @@ def index():
         
         solutions = {}
         timings = {}
-        
+        print(1)
         # Точный алгоритм
         start_time = time.time()
         exact_solution = exact_coloring(graph)
         timings['Exact'] = round(time.time() - start_time, 4)
         solutions['Exact'] = exact_solution
-        
+        print(2)
+
         # Генетический алгоритм (заглушка)
         start_time = time.time()
         genetic_solution = genetic_coloring(graph, genetic_params)
         timings['Genetic'] = round(time.time() - start_time, 4)
         solutions['Genetic'] = genetic_solution
-        
+        print(3)
+
         # Алгоритм иммунной сети (заглушка)
         start_time = time.time()
         immune_solution = immune_coloring(graph, immune_params)
         timings['Immune'] = round(time.time() - start_time, 4)
         solutions['Immune'] = immune_solution
-        
+
         accuracy = {
             'Exact': 100,
             'Genetic': compare_solutions(exact_solution, genetic_solution),
             'Immune': compare_solutions(exact_solution, immune_solution)
+        }
+        
+        colors = {
+            'Exact': get_count_colors(exact_solution),
+            'Genetic': get_count_colors(genetic_solution),
+            'Immune': get_count_colors(immune_solution)
         }
         
         # Сохранение графов для каждого алгоритма
@@ -87,22 +96,28 @@ def index():
         # Генерация графиков (бар-чартов) для текущего запуска
         timings_chart = generate_bar_chart(timings, "Execution Time", "Algorithm", "Time (s)")
         accuracy_chart = generate_bar_chart(accuracy, "Accuracy", "Algorithm", "Accuracy (%)")
+        colors_chart = generate_bar_chart(colors, "Colors", "Algorithm", "Count")
         
         # Добавление текущих результатов в историю
         for algo in timings:
             global_history_timings[algo].append(timings[algo])
             global_history_accuracy[algo].append(accuracy[algo])
+            global_colors_chart[algo].append(colors[algo])
         
         history_timings_chart = generate_line_chart(global_history_timings, "Execution Time History", "Run", "Time (s)")
         history_accuracy_chart = generate_line_chart(global_history_accuracy, "Accuracy History", "Run", "Accuracy (%)")
+        history_colors_chart = generate_line_chart(global_colors_chart, "Colors History", "Run", "its")
         
         return render_template('index.html',
                                timings=timings,
                                accuracy=accuracy,
+                               colors=colors,
                                timings_chart=timings_chart,
                                accuracy_chart=accuracy_chart,
+                               colors_chart=colors_chart,
                                history_timings_chart=history_timings_chart,
-                               history_accuracy_chart=history_accuracy_chart)
+                               history_accuracy_chart=history_accuracy_chart,
+                               history_colors_chart=history_colors_chart)
     
     return render_template('index.html')
 

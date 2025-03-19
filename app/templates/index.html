@@ -9,17 +9,22 @@
     <h1>Graph Coloring Results</h1>
     <p><strong>Timings (seconds):</strong> {{ timings }}</p>
     <p><strong>Accuracy (%):</strong> {{ accuracy }}</p>
+    <p><strong>Colors (its):</strong> {{ colors }}</p>
     <h2>Current Run Charts</h2>
     <h3>Timings Chart</h3>
     <img src="data:image/png;base64,{{ timings_chart }}" alt="Timings Chart">
     <h3>Accuracy Chart</h3>
     <img src="data:image/png;base64,{{ accuracy_chart }}" alt="Accuracy Chart">
+    <h3>Colors Chart</h3>
+    <img src="data:image/png;base64,{{ colors_chart }}" alt="Colors Chart">
 
     <h2>History Charts</h2>
     <h3>Execution Time History</h3>
     <img src="data:image/png;base64,{{ history_timings_chart }}" alt="History Timings Chart">
     <h3>Accuracy History</h3>
     <img src="data:image/png;base64,{{ history_accuracy_chart }}" alt="History Accuracy Chart">
+    <h3>Colors History</h3>
+    <img src="data:image/png;base64,{{ history_colors_chart }}" alt="History Colors Chart">
 
     {% for alg in timings %}
         <h2>{{ alg }} Algorithm Graph</h2>
