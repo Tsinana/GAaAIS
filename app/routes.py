@@ -55,20 +55,17 @@ def index():
         
         solutions = {}
         timings = {}
-        print(1)
         # Точный алгоритм
         start_time = time.time()
         exact_solution = exact_coloring(graph)
         timings['Exact'] = round(time.time() - start_time, 4)
         solutions['Exact'] = exact_solution
-        print(2)
 
         # Генетический алгоритм (заглушка)
         start_time = time.time()
         genetic_solution = genetic_coloring(graph, genetic_params)
         timings['Genetic'] = round(time.time() - start_time, 4)
         solutions['Genetic'] = genetic_solution
-        print(3)
 
         # Алгоритм иммунной сети (заглушка)
         start_time = time.time()
