@@ -1,100 +1,112 @@
 import random
+import networkx as nx
+from typing import List, Dict, Tuple
+
+
+Chromosome = List[int]
+Population = List[Chromosome]
 
 
 class GeneticAlgorithm:
-    def __init__(self, graph, params):
+    def __init__(self, graph: nx.Graph, population_size: int, generations: int):
         self.graph = graph
-        self.population_size = params.get('population_size', 50)
-        self.generations = params.get('generations', 10)
-        self.mutation_rate = params.get('mutation_rate', 0.1)
-        self.elite_size = params.get('elite_size', 5)
-        self.stagnation_limit = params.get('stagnation_limit', 10)
-        self.best_fitness_history = []
-
-    def initial_population(self):
-        """Генерирует начальную популяцию."""
-        population = []
-        for _ in range(self.population_size):
-            coloring = {node: random.randint(0, len(self.graph.nodes)) for node in self.graph.nodes}
-            population.append(coloring)
-        return population
-
-    def fitness(self, coloring):
-        """Функция оценки особей. Меньшее количество конфликтов лучше."""
-        conflicts = sum(1 for u, v in self.graph.edges if coloring[u] == coloring[v])
-        colors_used = len(set(coloring.values()))
-        return conflicts, colors_used
-
-    def selection(self, population):
-        """Селекция на основе рулетки."""
-        fitness_values = [1 / (1 + self.fitness(ind)[0]) for ind in population]
-        return random.choices(population, weights=fitness_values, k=2)
-
-    def crossover(self, parent1, parent2):
-        """Одноточечный кроссовер."""
-        crossover_point = random.randint(0, len(parent1) - 1)
-        child = {}
-        for i, node in enumerate(parent1):
-            child[node] = (
-                parent1[node] if i <= crossover_point else parent2[node]
-            )
-        return child
-
-    def mutate(self, coloring):
-        """Мутация."""
-        node = random.choice(list(coloring.keys()))
-        coloring = coloring.copy()
-        coloring[node] = random.randint(0, max(coloring.values()) + 1)
-        return coloring
-
-    def mutate_drastic(self, coloring):
-        """Резкая мутация (Де Фриз)."""
-        coloring = {node: random.randint(0, len(self.graph.nodes)) for node in coloring}
-        return coloring
-
-    def evolve(self, population):
-        """Эволюционный шаг по модели Дарвина."""
-        new_population = []
-        sorted_pop = sorted(population, key=lambda ind: self.fitness(ind))
-        new_population.extend(sorted_pop[:self.elite_size])
-
-        while len(new_population) < len(population):
-            parent1, parent2 = self.selection(sorted_pop)
-            child = self.crossover(parent1, parent2)
-            if random.random() < self.mutation_rate:
-                child = self.mutate(child)
-            new_population.append(child)
-
-        return new_population
-
-    def evolve_with_de_vries(self, population):
-        """Эволюционный шаг по модели Де Фриза."""
-        return [self.mutate_drastic(individual) for individual in population]
-
-    def solve(self):
-        population = self.initial_population()
-        stagnation_counter = 0
-
-        for generation in range(self.generations):
-            population = self.evolve(population)
-            best_fitness = min(self.fitness(ind) for ind in population)[0]
-
-            if self.best_fitness_history and best_fitness >= self.best_fitness_history[-1]:
-                stagnation_counter += 1
+        self.population_size = population_size
+        self.generations = generations
+        self.nodes = list(graph.nodes)
+        self.num_nodes = len(self.nodes)
+    
+    def initial_population(self) -> Population:
+        """Создает начальную популяцию (дробовик)."""
+        return [random.sample(self.nodes, self.num_nodes) for _ in range(self.population_size)]
+    
+    def decode_chromosome(self, chromosome: Chromosome) -> Dict[int, int]:
+        """Декодирует хромосому в раскраску графа."""
+        color_assignment = {}
+        current_color = 0
+        for node in chromosome:
+            if all(not self.graph.has_edge(node, colored_node)
+                   or color_assignment[colored_node] != current_color
+                   for colored_node in color_assignment):
+                color_assignment[node] = current_color
             else:
-                stagnation_counter = 0
+                current_color += 1
+                color_assignment[node] = current_color
+        return color_assignment
+    
+    def fitness(self, chromosome: Chromosome) -> float:
+        """Вычисляет целевую функцию (отношение цветов к вершинам)."""
+        colors = self.decode_chromosome(chromosome)
+        num_colors = len(set(colors.values()))
+        return num_colors / self.num_nodes
+    
+    def selection(self, population: Population) -> Tuple[Chromosome, Chromosome]:
+        """Турнирная селекция с размером турнира 2."""
+        participants = random.sample(population, 4)
+        participants.sort(key=self.fitness)
+        return participants[0], participants[1]
+    
+    def crossover(self, parent1: Chromosome, parent2: Chromosome) -> Chromosome:
+        """Упорядоченный кроссинговер."""
+        point = random.randint(1, self.num_nodes - 2)
+        child = parent1[:point] + [node for node in parent2 if node not in parent1[:point]]
+        return child
+    
+    def mutate(self, chromosome: Chromosome, mutation_rate: float = 0.05) -> Chromosome:
+        """Оператор мутации, аналогичный модели Де Фриза (мутация с глобальным изменением)."""
+        if random.random() < mutation_rate:
+            idx1, idx2 = random.sample(range(self.num_nodes), 2)
+            chromosome[idx1], chromosome[idx2] = chromosome[idx2], chromosome[idx1]
+        return chromosome
+    
+    def evolve(self, population: Population) -> Population:
+        """Эволюционный шаг по Дарвину с мутацией Де Фриза при отсутствии улучшения."""
+        new_population = []
+        best_fitness = min(self.fitness(chromo) for chromo in population)
+        
+        for _ in range(self.population_size):
+            parent1, parent2 = self.selection(population)
+            child = self.crossover(parent1, parent2)
+            
+            child_fitness = self.fitness(child)
+            if child_fitness >= best_fitness:
+                child = self.mutate(child, mutation_rate=0.2)  # Де Фриз
+            else:
+                child = self.mutate(child, mutation_rate=0.05)  # Дарвин
+            
+            new_population.append(child)
+        
+        return new_population
+    
+    def solve(self) -> Dict[int, int]:
+        """Основной метод для запуска ГА."""
+        population = self.initial_population()
+        best_solution = min(population, key=self.fitness)
+        
+        for _ in range(self.generations):
+            population = self.evolve(population)
+            current_best = min(population, key=self.fitness)
+            
+            if self.fitness(current_best) < self.fitness(best_solution):
+                best_solution = current_best
+        
+        return self.decode_chromosome(best_solution)
 
-            self.best_fitness_history.append(best_fitness)
 
-            if stagnation_counter >= self.stagnation_limit:
-                population = self.evolve_with_de_vries(population)
-                stagnation_counter = 0
+# Основная точка входа
+def generic_coloring(graph: nx.Graph, params: Dict) -> Dict[int, int]:
+    """
+    Генетический алгоритм раскраски графа с использованием эволюционных моделей Дарвина и Де Фриза.
 
-        best_solution = min(population, key=lambda ind: self.fitness(ind))
-        return best_solution
-
-
-def genetic_coloring(graph, params):
-    ga = GeneticAlgorithm(graph, params)
-    best_solution = ga.solve()
-    return best_solution
+    :param graph: Граф NetworkX для раскраски.
+    :param params: Словарь с параметрами (размер популяции и число поколений).
+    :return: Словарь (вершина: цвет).
+    """
+    try:
+        ga = GeneticAlgorithm(
+            graph=graph,
+            population_size=params.get("population_size", 50),
+            generations=params.get("generations", 100)
+        )
+        return ga.solve()
+    except Exception as e:
+        raise RuntimeError(f"Ошибка при выполнении генетического алгоритма: {e}")

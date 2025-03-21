@@ -5,7 +5,7 @@ from flask import Blueprint, request, render_template, send_file
 
 from app.algorithms.genetic import genetic_coloring
 from app.algorithms.immune import immune_coloring
-from app.exact import exact_coloring, compare_solutions, get_count_colors
+from app.exact import exact_coloring, compare_solutions, get_count_colors, null_coloring
 from app.utils import generate_bar_chart, generate_line_chart
 import networkx as nx
 
@@ -57,6 +57,8 @@ def index():
         timings = {}
         # Точный алгоритм
         start_time = time.time()
+        # null_coloring - используй для разработки своего алгоритма
+        # exact_solution = null_coloring(graph)
         exact_solution = exact_coloring(graph)
         timings['Exact'] = round(time.time() - start_time, 4)
         solutions['Exact'] = exact_solution
