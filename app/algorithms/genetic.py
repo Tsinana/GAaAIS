@@ -93,7 +93,7 @@ class GeneticAlgorithm:
 
 
 # Основная точка входа
-def generic_coloring(graph: nx.Graph, params: Dict) -> Dict[int, int]:
+def genetic_coloring(graph: nx.Graph, params: Dict) -> Dict[int, int]:
     """
     Генетический алгоритм раскраски графа с использованием эволюционных моделей Дарвина и Де Фриза.
 
