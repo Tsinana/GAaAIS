@@ -1,4 +1,5 @@
 from itertools import permutations
+import networkx as nx
 
 def compare_solutions(exact, test):
     """
@@ -107,3 +108,15 @@ def exact_coloring(graph):
     except Exception as error:
         # Обработка исключений с информативным сообщением об ошибке.
         raise Exception(f"Ошибка в функции exact_coloring: {error}")
+
+def greedy_coloring(graph):
+    """
+    Реализация точного алгоритма раскраски графа с использованием жадного алгоритма.
+    
+    Args:
+        graph (networkx.Graph): Граф, который необходимо раскрасить.
+        
+    Returns:
+        dict: Словарь, где ключ — вершина, а значение — назначенный ей цвет (целое число).
+    """
+    return nx.greedy_color(graph, strategy='largest_first')
