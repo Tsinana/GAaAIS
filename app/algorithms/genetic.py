@@ -7,6 +7,14 @@ Chromosome = List[int]
 Population = List[Chromosome]
 
 
+def exact_coloring(graph: nx.Graph) -> Dict[int, int]:
+    """
+    Реализация точного алгоритма раскраски графа с использованием жадного алгоритма.
+    """
+    coloring = nx.greedy_color(graph, strategy='largest_first')
+    return coloring
+
+
 class GeneticAlgorithm:
     def __init__(self, graph: nx.Graph, population_size: int, generations: int):
         self.graph = graph
@@ -16,8 +24,27 @@ class GeneticAlgorithm:
         self.num_nodes = len(self.nodes)
     
     def initial_population(self) -> Population:
-        """Создает начальную популяцию (дробовик)."""
-        return [random.sample(self.nodes, self.num_nodes) for _ in range(self.population_size)]
+                # """Создает начальную популяцию (дробовик)."""
+        # return [random.sample(self.nodes, self.num_nodes) for _ in range(self.population_size)]
+        """Создает начальную популяцию на основе жадного алгоритма."""
+        population = []
+        
+        # Создаем первую хромосому с помощью жадного алгоритма
+        coloring = exact_coloring(self.graph)
+        # Сортируем узлы по их цветам
+        sorted_nodes = sorted(self.nodes, key=lambda node: coloring[node])
+        population.append(sorted_nodes)
+        
+        # Создаем вариации начальной популяции
+        for _ in range(self.population_size - 1):
+            # Комбинируем жадное решение со случайными перестановками
+            new_chromosome = sorted_nodes.copy()
+            # Вносим случайное возмущение
+            idx1, idx2 = random.sample(range(self.num_nodes), 2)
+            new_chromosome[idx1], new_chromosome[idx2] = new_chromosome[idx2], new_chromosome[idx1]
+            population.append(new_chromosome)
+            
+        return population
     
     def decode_chromosome(self, chromosome: Chromosome) -> Dict[int, int]:
         """Декодирует хромосому в раскраску графа."""

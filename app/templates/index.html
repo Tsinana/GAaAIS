@@ -101,6 +101,9 @@
         </div>
 
         <h2 class="h2 mb-3">Визуализация алгоритмов</h2>
+        <div class="flash flash-warn mb-3">
+            <strong>Ограничение:</strong> Визуализация доступна только для графов с количеством вершин не более 32.
+        </div>
         {% for alg in timings %}
             <div class="algorithm-graph">
                 <h3 class="h3 mb-2">Граф алгоритма {{ alg }}</h3>
@@ -133,6 +136,9 @@
                     <div id="single-nodes" class="preset-nodes form-group">
                         <label for="nodes-count" class="d-block mb-1">Количество вершин:</label>
                         <input type="number" id="nodes-count" name="nodes_count" value="10" min="3" max="1200" class="form-control node-input">
+                        <div class="flash flash-warn mt-2">
+                            <strong>Примечание:</strong> Визуализация графов будет доступна только для графов с количеством вершин не более 32.
+                        </div>
                     </div>
                     
                     <div id="preset-nodes" class="preset-nodes form-group">

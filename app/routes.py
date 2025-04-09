@@ -28,7 +28,16 @@ def generate_random_graph(nodes_count):
     return nx.gnp_random_graph(nodes_count, prob)
 
 def draw_graph(graph, coloring, filename):
-    """Отрисовывает граф с раскраской и сохраняет его в файл."""
+    """Отрисовывает граф с раскраской и сохраняет его в файл.
+    
+    Ограничение: графы с более чем 32 вершинами не отрисовываются 
+    из-за высокой ресурсоёмкости и низкой информативности визуализации.
+    """
+    # Если в графе больше 32 вершин, не рисуем его
+    if len(graph.nodes) > 32:
+        print(f">>> Граф с {len(graph.nodes)} вершинами слишком большой для отрисовки")
+        return
+
     import matplotlib.pyplot as plt
     colors = [coloring[node] for node in graph.nodes]
     plt.figure(figsize=(8, 6))
@@ -208,4 +217,7 @@ def index():
 @main.route('/graph_image/<algorithm>')
 def graph_image(algorithm):
     image_path = os.path.join(GRAPH_DIR, f'{algorithm}_graph.png')
+    # Проверка существования файла перед отправкой
+    if not os.path.exists(image_path):
+        return "Изображение недоступно (возможно, граф слишком большой)", 404
     return send_file(image_path, mimetype='image/png')
